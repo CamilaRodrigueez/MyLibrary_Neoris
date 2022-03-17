@@ -1,0 +1,302 @@
+﻿@using Common.Utils.Enums
+@using static Common.Utils.Constant.Const
+
+@{
+    ViewData["Title"] = "Autores";
+    var idRols = User.Claims.FirstOrDefault(x => x.Type == TypeClaims.IdRol).Value;
+
+    bool isAdmin = idRols.Any(x => x.ToString() == Convert.ToInt32(Enums.RolUser.Administrador).ToString());
+  
+
+}
+<div class="row">
+    <div class="col-md-6">
+
+        <h1>Listado de Autores </h1>
+    </div>
+    @if (isAdmin)
+    {
+        <div class="col-md-6">
+            <p>
+            <button class="btn btn-primary" onclick="nuevoAutor()">
+            <i class="fas fa-user"></i> Nuevo Autor
+         
+            </button>
+        </p>
+        </div>
+    }
+</div>
+<input id="txtIsAdmin" type="text" value="@isAdmin.ToString()"  hidden/>
+
+ <div class="row">
+
+        <table class="table">
+            <thead class="thead-dark">
+            <tr>@if (isAdmin)
+                {
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Apellido</th>
+                    <th scope="col">Opciones</th>
+                }else{
+                     <th scope="col">Nombre</th>
+                    <th scope="col">Apellido</th>
+                }
+                </tr>
+            </thead>
+
+            <tbody id="cuerpoAuthors"></tbody>
+        </table>
+
+    </div>
+
+    @*modal*@
+     <div class="modal fade" id="modalAuthors" tabindex="1" role="dialog" aria-labelledby="modalAuthorsLabel" aria-hidden="true">
+
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="idTituloModalAuthors">Crear Autor</h5>
+                </div>
+                <div class="modal-body">
+                    <form>
+
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="recipient-name" class="col-form-label">Nombre</label>
+                                <input type="text"
+                                   class="form-control"
+                                   id="txtNameAuthor"
+                                   placeholder="Nombre"
+                                   required
+                                   maxlength="100">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label for="recipient-name" class="col-form-label">Apellido</label>
+                                <input type="text"
+                                   class="form-control"
+                                   id="txtApellido"
+                                   placeholder="Apellido"
+                                   required
+                                   maxlength="100">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="limpiarForm()">
+                        <i class="fas fa-window-close"></i>
+                        Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="guardarAutor()">
+                        <i class="far fa-save"></i>
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    
+    @section Scripts{
+  @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    
+<script type="text/javascript" charset="utf-8">
+     var listaAuthors= [];
+
+
+      let idAuthor='';
+     
+       let isAdmin=true;
+     $(document).ready(function () {
+        let txtIsAdmin=$("#txtIsAdmin").val();
+        isAdmin=txtIsAdmin=='False'?false:true;
+         console.log(listaAuthors);
+      
+         getAllAuthors();
+     });
+
+     function getAllAuthors()
+     {
+         modalProcesando(true);
+         $.ajax({
+             url: '@Url.Action("GetAllAuthors", "Authors")',
+             method: 'GET',
+             dataType: "json",
+             success: function (data) {
+                 modalProcesando(false);
+                 if(data.isSuccess)
+                {
+                    listaAuthors=data.result;
+                    cargarGridAuthors(listaAuthors);
+                    console.log(listaAuthors);
+                }else{
+                    Swal.fire(
+                                'Opps!',
+                                data.message,
+                                'error');
+                }
+             },
+             error: function (xhr, textStatus, errorThrown) {
+                     modalProcesando(false);
+                     console.error(xhr, textStatus, errorThrown);
+                 }
+          });
+     }
+     
+     function cargarGridAuthors(data){
+         $("#cuerpoAuthors").html("");
+          if(isAdmin)
+         {
+         for(var i=0; i<data.length; i++){
+             var tr=`
+              <tr>
+                 <th>`+ data[i].name +`</th>
+                 <th> `+ data[i].lastName +`</th>
+                 <td>
+                 <button  class="btn btn-warning" onclick="editarAuthors(`+ data[i].id +`)"><i class="fas fa-edit"></i> Editar</button>
+                 </td>
+             </tr>
+             `;
+             $("#cuerpoAuthors").append(tr);
+         }
+         }else{
+             for(var i=0; i<data.length; i++){
+             var tr=`
+              <tr>
+                 <th>`+ data[i].name +`</th>
+                 <th> `+ data[i].lastName +`</th>
+             </tr>
+             `;
+             $("#cuerpoAuthors").append(tr);
+         }
+       }
+    }
+      function nuevoAutor(){
+        limpiarForm();
+
+        $('#idTituloModalAuthors').html("Crear Autor");
+        $('#modalAuthors').modal({keyboard:true});
+
+     }
+       function validarForm()
+     {
+         if($("#txtNameAuthor").val()=='')
+         {
+             $("#txtNameAuthor").focus();
+             toastMessage('warning','El nombre es obligatorio.');
+             return false;
+         }
+
+         if($("#txtApellido").val()=='')
+         {
+             $("#txtApellido").focus();
+             toastMessage('warning','El Apellido es obligatorio.');
+             return false;
+         }
+         return true;
+     }
+     function limpiarForm()
+     {
+        $("#txtNameAuthor").val('');
+        $("#txtApellido").val('');
+     }
+       function guardarAutor(){
+           
+         if(validarForm())
+         {
+             let parametro={
+                 Name:$("#txtNameAuthor").val(),
+                 LastName:$("#txtApellido").val(),
+     
+             };
+
+             if(idAuthor=='')
+             {
+                 modalProcesando(true);
+                 $.ajax({
+                     url: '@Url.Action("InsertAuthor", "Authors")',
+                     method: 'POST',
+                     data:parametro,
+                     dataType: "json",
+                     success: function (data) {
+                          if(data.isSuccess)
+                {
+                    listaAuthors=data.result;
+                    cargarGridAuthors(listaAuthors);
+                    console.log(listaAuthors);
+                }else{
+                    Swal.fire(
+                                'Opps!',
+                                data.message,
+                                'error');
+                }
+                         if (data){
+                             $('#modalAuthors').modal('hide');
+                             limpiarForm();
+                             toastMessage('success','Autor guardado exitosamente!');
+                             getAllAuthors();
+                         }else{
+                              toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                         }
+                     },
+                     error: function (xhr, textStatus, errorThrown) {
+                             modalProcesando(false);
+                             toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                             console.error(xhr, textStatus, errorThrown);
+                         }
+                  });
+             }else{
+               parametro.Id=idAuthor;
+
+                 modalProcesando(true);
+                 $.ajax({
+                     url: '@Url.Action("UpdateAuthor", "Authors")',
+                     method: 'PUT',
+                     data:parametro,
+                     dataType: "json",
+                     success: function (data) {
+                         modalProcesando(false);
+                         console.log(listaAuthors);
+                 
+                         if (data){
+                             $('#modalAuthors').modal('hide');
+                             limpiarForm();
+                             toastMessage('success','Autor guardado exitosamente!');
+                              getAllAuthors();
+                         }else{
+                              toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                         }
+
+
+                     },
+                     error: function (xhr, textStatus, errorThrown) {
+                             modalProcesando(false);
+                             toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                             console.error(xhr, textStatus, errorThrown);
+                         }
+                  });
+             }
+         }
+     }
+      function editarAuthors(id)
+     {
+         idAuthor=id;
+         let dates= listaAuthors.find(x=>x.id==idAuthor);
+
+         $('#txtNameAuthor').val(dates.name);
+         $('#txtApellido').val(dates.lastName);
+
+        $('#idTituloModalAuthors').html("Editar Autor");
+        $('#modalAuthors').modal({keyboard:true});
+     }
+    
+
+
+</script>
+}

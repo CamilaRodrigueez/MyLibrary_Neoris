@@ -1,0 +1,79 @@
+﻿
+@{
+      ViewData["Title"] = "Usuarios";
+}
+<div class="row">
+<div class="col-md-6">
+
+<h1>Listado de Autores </h1>
+</div>
+
+</div>
+ <div class="row">
+
+        <table class="table">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Apellido</th>
+                     <th scope="col">Email</th>
+                      <th scope="col">Rol</th>
+                    
+                </tr>
+            </thead>
+
+            <tbody id="cuerpoUsers"></tbody>
+        </table>
+ </div>
+   @section Scripts{
+  @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    <script type="text/javascript" charset="utf-8">
+var listaUsers= [];
+
+       $(document).ready(function () {
+         console.log(listaUsers);
+         getAllUsers();
+         
+     });
+     function getAllUsers()
+     {
+         modalProcesando(true);
+         $.ajax({
+             url: '@Url.Action("GetAllUsers", "User")',
+             method: 'GET',
+             dataType: "json",
+             success: function (data) {
+                 modalProcesando(false);
+                    listaUsers=data.result;
+                     cargarGridUsers(listaUsers);
+                    console.log(listaUsers);
+             },
+             error: function (xhr, textStatus, errorThrown) {
+                     modalProcesando(false);
+                     console.error(xhr, textStatus, errorThrown);
+                 }
+          });
+     }
+
+    function cargarGridUsers(data)
+     {
+         $("#cuerpoUsers").html("");
+
+         for(var i=0; i<data.length; i++){
+             var tr=`
+              <tr>
+                 <th>`+ data[i].name +`</th>
+                 <th> `+ data[i].lastName +`</th>
+                  <th> `+ data[i].userName +`</th>
+                     <th> `+ data[i].nameRol+`</th>
+                 
+             </tr>
+             `;
+             $("#cuerpoUsers").append(tr);
+         }
+     }
+
+    </script>
+   }

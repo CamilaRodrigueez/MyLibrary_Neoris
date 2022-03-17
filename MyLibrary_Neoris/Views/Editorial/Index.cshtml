@@ -1,0 +1,344 @@
+﻿@using Common.Utils.Enums
+@using static Common.Utils.Constant.Const
+
+@{
+    ViewData["Title"] = "Editoriales";
+    var idRols = User.Claims.FirstOrDefault(x => x.Type == TypeClaims.IdRol).Value;
+
+    bool isAdmin = idRols.Any(x => x.ToString() == Convert.ToInt32(Enums.RolUser.Administrador).ToString());
+}
+<div class="row">
+    <div class="col-md-6">
+
+        <h1>Listado de Editoriales </h1>
+    </div>
+    @if (isAdmin)
+    {
+        <div class="col-md-6">
+            <p>
+                <button class="btn btn-primary" onclick="nuevoEditorial()">
+                    <i class="fas fa-newspaper"></i> Nuevo Editorial
+
+                </button>
+            </p>
+        </div>
+    }
+
+</div>
+<input id="txtIsAdmin" type="text" value="@isAdmin.ToString()" hidden />
+
+<div class="row">
+
+    <table class="table">
+        <thead class="thead-dark">
+            <tr>
+                @if (isAdmin)
+                {
+                 <th scope="col">Nombre</th>
+                <th scope="col">Dirección</th>
+                <th scope="col">Opciones</th>
+                }else{
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Dirección</th>
+                }
+               
+            </tr>
+        </thead>
+
+        <tbody id="cuerpoEditorial"></tbody>
+    </table>
+
+</div>
+
+<div class="modal fade" id="modalEditorial" tabindex="1" role="dialog" aria-labelledby="modalEditorialLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="idTituloModalEditorial">Crear Editorial</h5>
+            </div>
+            <div class="modal-body">
+                <form>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Nombre</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtNameEditorial"
+                                   placeholder="Nombre"
+                                   required
+                                   maxlength="100">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Dirección</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtDirection"
+                                   placeholder="Dirección"
+                                   required
+                                   maxlength="100">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="limpiarForm()">
+                    <i class="fas fa-window-close"></i>
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="guardarEditorial()">
+                    <i class="far fa-save"></i>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+  @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+<script type="text/javascript" charset="utf-8">
+        //var listaEditorial= JSON.parse('@Json.Serialize(@Model)');
+    var listaEditorial= [];
+
+    let idEditorial='';
+    let isAdmin=true;
+    $(document).ready(function () {
+        let txtIsAdmin=$("#txtIsAdmin").val();
+        isAdmin=txtIsAdmin=='False'?false:true;
+        getAllEditorial();
+    });
+
+     function getAllEditorial()
+    {
+        modalProcesando(true);
+        $.ajax({
+            url: '@Url.Action("GetAllEditorial", "Editorial")',
+            method: 'GET',
+            dataType: "json",
+            success: function (data) {
+                modalProcesando(false);
+                if(data.isSuccess)
+               {
+                   listaEditorial=data.result;
+                  cargarGridEditorial(listaEditorial);
+                   console.log(listaEditorial);
+               }else{
+                   Swal.fire(
+                               'Opps!',
+                               data.message,
+                               'error');
+               }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                    modalProcesando(false);
+                    console.error(xhr, textStatus, errorThrown);
+                }
+         });
+    }
+     function cargarGridEditorial(data){
+        $("#cuerpoEditorial").html("");
+          if(isAdmin)
+         {
+            for(var i=0; i<data.length; i++){
+            var tr=`
+             <tr>
+                <th>`+ data[i].name +`</th>
+                <th> `+ data[i].direction +`</th>
+                <td>
+                <button  class="btn btn-warning" onclick="editarEditorial(`+ data[i].id +`)"><i class="fas fa-edit"></i> Editar</button>
+                <button class="btn btn-danger" onclick="eliminarEditorial(`+ data[i].id +`)"><i class="far fa-trash-alt"></i> Eliminar</button>
+                </td>
+            </tr>
+            `;
+            $("#cuerpoEditorial").append(tr);
+            }
+         }else{
+              for(var i=0; i<data.length; i++){
+            var tr=`
+             <tr>
+                <th>`+ data[i].name +`</th>
+                <th> `+ data[i].direction +`</th>
+            </tr>
+            `;
+            $("#cuerpoEditorial").append(tr);
+            }
+         }
+     }
+      function nuevoEditorial()
+      {
+       limpiarForm();
+       $('#idTituloModalEditorial').html("Crear Editorial");
+       $('#modalEditorial').modal({keyboard:true});
+      }
+
+    function validarForm()
+    {
+        if($("#txtNameEditorial").val()=='')
+        {
+            $("#txtNameEditorial").focus();
+            toastMessage('warning','El nombre es obligatorio.');
+            return false;
+        }
+
+        if($("#txtDirection").val()=='')
+        {
+            $("#txtDirection").focus();
+            toastMessage('warning','La dirección es obligatoria.');
+            return false;
+        }
+        return true;
+    }
+      function limpiarForm()
+    {
+       $("#txtNameEditorial").val('');
+       $("#txtDirection").val('');
+    }
+     function guardarEditorial(){
+
+        if(validarForm())
+        {
+            let parametro={
+                Name:$("#txtNameEditorial").val(),
+                Direction:$("#txtDirection").val(),
+
+            };
+
+            if(idEditorial=='')
+            {
+                modalProcesando(true);
+                $.ajax({
+                    url: '@Url.Action("InsertEditorial", "Editorial")',
+                    method: 'POST',
+                    data:parametro,
+                    dataType: "json",
+                    success: function (data) {
+                         if(data.isSuccess)
+               {
+                   listaEditorial=data.result;
+                   cargarGridEditorial(listaEditorial);
+                   console.log(listaEditorial);
+               }else{
+                   Swal.fire(
+                               'Opps!',
+                               data.message,
+                               'error');
+               }
+                        if (data){
+                            $('#modalEditorial').modal('hide');
+                            limpiarForm();
+                            toastMessage('success','Editorial guardado exitosamente!');
+                            getAllEditorial();
+                        }else{
+                             toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                        }
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                            modalProcesando(false);
+                            toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                            console.error(xhr, textStatus, errorThrown);
+                        }
+                 });
+            }else{
+              parametro.Id=idEditorial;
+
+                modalProcesando(true);
+                $.ajax({
+                    url: '@Url.Action("UpdateEditorial", "Editorial")',
+                    method: 'PUT',
+                    data:parametro,
+                    dataType: "json",
+                    success: function (data) {
+                        modalProcesando(false);
+                        console.log(listaEditorial);
+
+                        if (data){
+                            $('#modalEditorial').modal('hide');
+                            limpiarForm();
+                            toastMessage('success','Editorial actualizado exitosamente!');
+                            getAllEditorial();
+                        }else{
+                             toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                        }
+
+
+                    },
+                    error: function (xhr, textStatus, errorThrown) {
+                            modalProcesando(false);
+                            toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                            console.error(xhr, textStatus, errorThrown);
+                        }
+                 });
+            }
+        }
+    }
+     function editarEditorial(id)
+    {
+        idEditorial=id;
+        let dates= listaEditorial.find(x=>x.id==idEditorial);
+
+        $('#txtNameEditorial').val(dates.name);
+        $('#txtDirection').val(dates.direction);
+        $('#idTituloModalEditorial').html("Editar Editorial");
+       $('#modalEditorial').modal({keyboard:true});
+    }
+
+     function eliminarEditorial(idEditorial)
+    {
+        console.log(idEditorial);
+        Swal.fire({
+            title: '¿Confirmar Eliminacion?',
+            text: "No podrás revertir esto.!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            cancelButtonText: 'Cancelar',
+            confirmButtonText: 'Si, Eliminar!',
+        }).then((result) => {
+            if (result.isConfirmed) {
+
+                modalProcesando(true);
+                //petición
+                $.ajax({
+                    url: '@Url.Action("DeleteEditorial", "Editorial")',
+                    method: 'DELETE',
+                    data:{
+                        idEditorial:idEditorial
+                    },
+                    dataType: "json",
+                    success: function (data) {
+                        modalProcesando(false);
+                        console.log(data);
+                        if (data.isSuccess){
+
+                            listaEditorial=listaEditorial.filter(x=>x.id!=idEditorial);
+                           cargarGridEditorial(listaEditorial);
+
+                            Swal.fire(
+                                'Eliminado!',
+                                data.message,
+                                'success');
+                        }else{
+                            Swal.fire(
+                                'Error!',
+                                data.message,
+                                'error');
+                        }
+                     },
+                     error: function (xhr, textStatus, errorThrown) {
+                         modalProcesando(false);
+                         console.error(xhr, textStatus, errorThrown);
+                     }
+                  });
+                }
+
+            });
+        }
+</script>
+    }

@@ -1,0 +1,703 @@
+﻿@using Common.Utils.Enums
+@using static Common.Utils.Constant.Const
+@{
+    ViewData["Title"] = "Libros";
+
+    var idRols = User.Claims.FirstOrDefault(x => x.Type == TypeClaims.IdRol).Value;
+
+    bool isAdmin = idRols.Any(x => x.ToString() == Convert.ToInt32(Enums.RolUser.Administrador).ToString());
+}
+<div class="row">
+    <div class="col-md-6">
+
+        <h1>Listado de Libros </h1>
+    </div>
+    @if (isAdmin)
+    {
+        <div class="col-md-6">
+            <p>
+                <button class="btn btn-primary" onclick="nuevoLibro()">
+                    <i class="fas fa-book"></i> Nuevo Libro
+
+                </button>
+            </p>
+        </div>
+    }
+
+</div>
+
+<input id="txtIsAdmin" type="text" value="@isAdmin.ToString()"  hidden/>
+
+<div class="row">
+
+    <table class="table">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Título</th>
+                <th scope="col">Género</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Autor</th>
+                <th scope="col">Opciones</th>
+            </tr>
+        </thead>
+
+        <tbody id="cuerpoBooks"></tbody>
+    </table>
+
+</div>
+@*modla*@
+<div class="modal fade" id="modalBooks" tabindex="1" role="dialog" aria-labelledby="modalBooksLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="idTituloModalBooks">Crear Libro</h5>
+            </div>
+            <div class="modal-body">
+                <form>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Título</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtTitle"
+                                   placeholder="Título libro"
+                                   required
+                                   maxlength="100">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Género</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtGender"
+                                   placeholder="Género"
+                                   required
+                                   maxlength="100">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Páginas</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtPages"
+                                   placeholder="Cantidad de páginas"
+                                   required>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="control-label"> Autor</label>
+                            <select id="cmbAuthor" class="form-control" onchange="seleccionarAutor()" required>
+                                <option> Seleccionar</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label class="control-label"> Estado</label>
+                            <select id="cmbTypeState" class="form-control" onchange="seleccionarEstado()" required>
+                                <option> Seleccionar</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label class="control-label"> Editorial</label>
+                            <select id="cmbEditorial" class="form-control" onchange="seleccionarEditorial()" required>
+                                <option> Seleccionar</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label for="recipient-name" class="col-form-label">Sipnosis</label>
+                            <textarea type="text"
+                                      class="form-control"
+                                      id="txtSynopsis"
+                                      required
+                                      placeholder="Sipnosis del libro">
+                               </textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-dismiss="modal" onclick="limpiarForm()">
+                    <i class="fas fa-window-close"></i>
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="guardarBook()">
+                    <i class="far fa-save"></i>
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@*modalDetalles*@
+<div class="modal fade" id="modalDetalles" tabindex="1" role="dialog" aria-labelledby="modalDetallesLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="idTituloModalDetalles">Detalles del Libro</h5>
+            </div>
+            <div class="modal-body">
+                <form>
+
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Título</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtTitulo"
+                                   readonly="readonly"
+                                   maxlength="100">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Género</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtGenero"
+                                   placeholder="Género"
+                                   readonly="readonly"
+                                   maxlength="100">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Páginas</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtPaginas"
+                                   readonly="readonly">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Autor</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtAutor"
+                                   readonly="readonly">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Estado</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtEstado"
+                                   readonly="readonly">
+                        </div>
+                        <div class="col-md-6 form-group">
+                            <label for="recipient-name" class="col-form-label">Editorial</label>
+                            <input type="text"
+                                   class="form-control"
+                                   id="txtEditorial"
+                                   readonly="readonly">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 form-group">
+                            <label for="recipient-name" class="col-form-label">Sipnosis</label>
+                            <textarea type="text"
+                                      class="form-control"
+                                      id="txtSipnosis"
+                                      readonly="readonly">
+                               </textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" data-dismiss="modal">
+                    <i class="fas fa-arrow-left"></i>
+                    Volver a lista!
+                </button>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+  @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
+<script type="text/javascript" charset="utf-8">
+
+    var listaBooks= [];
+    var listaAuthors=[];
+    var listaEditorial=[];
+    var listaTypeState=[];
+
+    let idBook='';
+    let idAuthor='';
+    let idEditorial='';
+    let idTypeState='';
+
+    let isAdmin=true;
+
+    $(document).ready(function () {
+
+        let txtIsAdmin=$("#txtIsAdmin").val();
+        isAdmin=txtIsAdmin=='False'?false:true;
+
+         console.log(isAdmin);
+         //cargarGridBooks(listaBooks);
+         //console.log(isAdmin);
+
+         if(isAdmin)
+         {
+             getAllBooks();
+             getAllAuthors();
+             getAllEditorial();
+             getTypeState();
+         }else{
+             getAllBooks();
+             getAllAuthors();
+             getAllEditorial();
+         }
+
+     });
+     function getAllBooks()
+     {
+         modalProcesando(true);
+         $.ajax({
+             url: '@Url.Action("GetAllBooks", "Books")',
+             method: 'GET',
+             dataType: "json",
+             success: function (data) {
+                 modalProcesando(false);
+                 if(data.isSuccess)
+                {
+                    listaBooks=data.result;
+                    cargarGridBooks(listaBooks);
+                    console.log(listaBooks);
+                }else{
+                    Swal.fire(
+                                'Opps!',
+                                data.message,
+                                'error');
+                }
+             },
+             error: function (xhr, textStatus, errorThrown) {
+                     modalProcesando(false);
+                     console.error(xhr, textStatus, errorThrown);
+                 }
+          });
+     }
+
+     function cargarGridBooks(data)
+     {
+         $("#cuerpoBooks").html("");
+
+         if(isAdmin)
+         {
+             for(var i=0; i<data.length; i++){
+                 var tr=`
+                 <tr>
+                 <th>`+ data[i].title +`</th>
+                 <th> `+ data[i].gender +`</th>
+                 <th> `+ data[i].typeState +`</th>
+                 <th> `+ data[i].nameAuthor +`</th>
+                 <td>
+                 <button  class="btn btn-warning" onclick="editarBook(`+ data[i].id +`)"><i class="fas fa-edit"></i> Editar</button>
+                 <button class="btn btn-danger" onclick="eliminarBook(`+ data[i].id +`)"><i class="far fa-trash-alt"></i> Eliminar</button>
+                  <button  class="btn btn-info" onclick="detallesBook(`+ data[i].id +`)"><i class="fas fa-eye"></i> Detalles</button>
+                 </td>
+                 </tr>`;
+             $("#cuerpoBooks").append(tr);
+             }
+         }else{
+              for(var i=0; i<data.length; i++){
+                 var tr=`
+                 <tr>
+                 <th>`+ data[i].title +`</th>
+                 <th> `+ data[i].gender +`</th>
+                 <th> `+ data[i].typeState +`</th>
+                 <th> `+ data[i].nameAuthor +`</th>
+                 <td>
+                  <button  class="btn btn-info" onclick="detallesBook(`+ data[i].id +`)"><i class="fas fa-eye"></i> Detalles</button>
+                 </td>
+                 </tr>`;
+             $("#cuerpoBooks").append(tr);
+             }
+         }
+
+
+     }
+       function eliminarBook(idBook)
+     {
+         console.log(idBook);
+         Swal.fire({
+             title: '¿Confirmar Eliminacion?',
+             text: "No podrás revertir esto.!",
+             icon: 'warning',
+             showCancelButton: true,
+             confirmButtonColor: '#3085d6',
+             cancelButtonColor: '#d33',
+             cancelButtonText: 'Cancelar',
+             confirmButtonText: 'Si, Eliminar!',
+         }).then((result) => {
+             if (result.isConfirmed) {
+
+                 modalProcesando(true);
+                 //petición
+                 $.ajax({
+                     url: '@Url.Action("DeleteBooks", "Books")',
+                     method: 'DELETE',
+                     data:{
+                         idBook:idBook
+                     },
+                     dataType: "json",
+                     success: function (data) {
+                         modalProcesando(false);
+                         console.log(data);
+                         if (data.isSuccess){
+
+                             listaBooks=listaBooks.filter(x=>x.id!=idBook);
+                             cargarGridBooks(listaBooks);
+
+                             Swal.fire(
+                                 'Eliminado!',
+                                 data.message,
+                                 'success');
+                         }else{
+                             Swal.fire(
+                                 'Error!',
+                                 data.message,
+                                 'error');
+                         }
+                      },
+                      error: function (xhr, textStatus, errorThrown) {
+                          modalProcesando(false);
+                          console.error(xhr, textStatus, errorThrown);
+                      }
+                   });
+                 }
+
+             });
+         }
+       function guardarBook(){
+
+         if(validarForm())
+         {
+             let parametro={
+                 Title:$("#txtTitle").val(),
+                 Gender:$("#txtGender").val(),
+                 Pages:$("#txtPages").val(),
+                 Synopsis:$("#txtSynopsis").val(),
+                 IdAuthor:idAuthor,
+                 IdEditorial:idEditorial,
+                 IdTypeState:idTypeState,
+
+             };
+
+             if(idBook=='')
+             {
+                 modalProcesando(true);
+                 $.ajax({
+                     url: '@Url.Action("InsertBooks", "Books")',
+                     method: 'POST',
+                     data:parametro,
+                     dataType: "json",
+                     success: function (data) {
+                         modalProcesando(false);
+
+                         if (data){
+                             $('#modalBooks').modal('hide');
+                             limpiarForm();
+                             toastMessage('success','Libro guardado exitosamente!');
+                             getAllBooks();
+                         }else{
+                              toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                         }
+                     },
+                     error: function (xhr, textStatus, errorThrown) {
+                             modalProcesando(false);
+                             toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                             console.error(xhr, textStatus, errorThrown);
+                         }
+                  });
+             }else{
+                 parametro.Id=idBook
+                 parametro.IdAuthor=idAuthor;
+
+                 modalProcesando(true);
+                 $.ajax({
+                     url: '@Url.Action("UpdateBooks", "Books")',
+                     method: 'PUT',
+                     data:parametro,
+                     dataType: "json",
+                     success: function (data) {
+                         modalProcesando(false);
+
+                         console.log(listaBooks);
+
+                         if (data){
+                             $('#modalBooks').modal('hide');
+                             limpiarForm();
+                             toastMessage('success','Libro editado exitosamente!');
+                             getAllBooks();
+                         }else{
+                              toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                         }
+
+
+                     },
+                     error: function (xhr, textStatus, errorThrown) {
+                             modalProcesando(false);
+                             toastMessage('error','Hubo un error al guardar, por favor intentarlo nuevamente!');
+                             console.error(xhr, textStatus, errorThrown);
+                         }
+                  });
+             }
+         }
+     }
+      function editarBook(id)
+     {
+         idBook=id;
+
+         let dates= listaBooks.find(x=>x.id==idBook);
+
+
+         idAuthor=dates.idAuthor;
+         idEditorial=dates.idEditorial;
+         idTypeState=dates.idTypeState;
+
+         $('#txtTitle').val(dates.title);
+         $('#txtGender').val(dates.gender);
+         $('#txtPages').val(dates.pages);
+         $('#txtSynopsis').val(dates.synopsis);
+
+          cargarAuthors(listaAuthors,idAuthor);
+          cargarEditorial(listaEditorial, idEditorial);
+          cargarTypeState(listaTypeState, idTypeState);
+
+          $('#idTituloModalBooks').html("Editar Libro");
+          $('#modalBooks').modal({keyboard:true});
+     }
+        function detallesBook(id)
+     {
+         idBook=id;
+
+         let dates= listaBooks.find(x=>x.id==idBook);
+
+         $('#txtTitulo').val(dates.title);
+         $('#txtGenero').val(dates.gender);
+         $('#txtPaginas').val(dates.pages);
+         $('#txtSipnosis').val(dates.synopsis);
+         $('#txtAutor').val(dates.nameAuthor);
+         $('#txtEstado').val(dates.typeState);
+         $('#txtEditorial').val(dates.editorial);
+
+
+          $('#idTituloModalDetalles').html("Información del Libro ");
+          $('#modalDetalles').modal({keyboard:true});
+     }
+      function validarForm()
+     {
+         if($("#txtTitle").val()=='')
+         {
+             $("#txtTitle").focus();
+             toastMessage('warning','El Título del libro es obligatorio.');
+             return false;
+         }
+
+         if($("#txtGender").val()=='')
+         {
+             $("#txtGender").focus();
+             toastMessage('warning','El género es obligatorio.');
+             return false;
+         }
+         if($("#txtPages").val()=='')
+         {
+             $("#txtPages").focus();
+             toastMessage('warning','La cantidad de páginas es obligatorio.');
+             return false;
+         }
+         if($("#txtSynopsis").val()=='')
+         {
+             $("#txtSynopsis").focus();
+             toastMessage('warning','La Sipnosis del libro es obligatorio.');
+             return false;
+         }
+         if(idAuthor=='')
+         {
+             $("#cmbAuthor").focus();
+             toastMessage('warning','El autor es obligatorio.');
+             return false;
+         }
+
+         if(idEditorial=='')
+         {
+             $("#cmbEditorial").focus();
+             toastMessage('warning','El editorial es obligatorio.');
+             return false;
+         }
+          if(idTypeState=='')
+         {
+             $("#cmbTypeState").focus();
+             toastMessage('warning','El estado es obligatorio.');
+             return false;
+         }
+
+         return true;
+     }
+
+     function limpiarForm()
+    {
+       $("#txtTitle").val('');
+       $("#txtGender").val('');
+       $("#txtPages").val('');
+       $("#txtSynopsis").val('');
+       idBook='';
+       idAuthor='';
+       idEditorial='';
+       idTypeState='';
+
+       cargarAuthors(listaAuthors);
+       cargarEditorial(listaEditorial);
+       cargarTypeState(listaTypeState);
+    }
+     function nuevoLibro(){
+        limpiarForm();
+
+        $('#idTituloModalBooks').html("Crear Libro");
+        $('#modalBooks').modal({keyboard:true});
+
+     }
+      function getAllAuthors()
+     {
+         modalProcesando(true);
+         $.ajax({
+             url: '@Url.Action("GetAllAuthors", "Authors")',
+             method: 'GET',
+             dataType: "json",
+             success: function (data) {
+                 modalProcesando(false);
+                 if(data.isSuccess)
+                {
+                    listaAuthors=data.result;
+                   cargarAuthors(listaAuthors);
+                    console.log(listaAuthors);
+                }else{
+                    Swal.fire(
+                                'Opps!',
+                                data.message,
+                                'error');
+                }
+             },
+             error: function (xhr, textStatus, errorThrown) {
+                     modalProcesando(false);
+                     console.error(xhr, textStatus, errorThrown);
+                 }
+          });
+     }
+      function cargarAuthors(data, selected) {
+         $("#cmbAuthor").empty();
+         $("#cmbAuthor").append('<option value="" disabled selected>Seleccione un autor</option>');
+         $.each(data, function (i, lista) {
+             if (data[i].id == selected) {
+                 $("#cmbAuthor").append('<option value="' + data[i].id + '"selected>' + data[i].name + '</option>');
+             }
+             else {
+                 $("#cmbAuthor").append('<option value="' + data[i].id + '">' + data[i].name + '</option>');
+             }
+         });
+     }
+      function seleccionarAutor()
+     {
+         var combo=document.getElementById("cmbAuthor");
+         idAuthor = combo.options[combo.selectedIndex].value;
+     }
+       function getAllEditorial()
+     {
+         modalProcesando(true);
+         $.ajax({
+             url: '@Url.Action("GetAllEditorial", "Editorial")',
+             method: 'GET',
+             dataType: "json",
+             success: function (data) {
+                 modalProcesando(false);
+                 if(data.isSuccess)
+                {
+                    listaEditorial=data.result;
+                    cargarEditorial(listaEditorial);
+                    console.log(listaEditorial);
+                }else{
+                    Swal.fire(
+                                'Opps!',
+                                data.message,
+                                'error');
+                }
+             },
+             error: function (xhr, textStatus, errorThrown) {
+                     modalProcesando(false);
+                     console.error(xhr, textStatus, errorThrown);
+                 }
+          });
+     }
+      function cargarEditorial(data, selected) {
+         $("#cmbEditorial").empty();
+         $("#cmbEditorial").append('<option value="" disabled selected>Seleccione un editorial</option>');
+         $.each(data, function (i, lista) {
+             if (data[i].id == selected) {
+                 $("#cmbEditorial").append('<option value="' + data[i].id + '"selected>' + data[i].name + '</option>');
+             }
+             else {
+                 $("#cmbEditorial").append('<option value="' + data[i].id + '">' + data[i].name + '</option>');
+             }
+         });
+     }
+      function seleccionarEditorial()
+     {
+         var combo=document.getElementById("cmbEditorial");
+         idEditorial = combo.options[combo.selectedIndex].value;
+     }
+      function getTypeState()
+    {
+        modalProcesando(true);
+        $.ajax({
+            url: '@Url.Action("GetAllTypeState", "Books")',
+            method: 'GET',
+            dataType: "json",
+            success: function (data) {
+                modalProcesando(false);
+                 if(data.isSuccess)
+                {
+                   listaTypeState=data.result;
+                   cargarTypeState(listaTypeState);
+                   console.log(listaTypeState);
+                }else{
+                    Swal.fire(
+                                'Opps!',
+                                data.message,
+                                'error');
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                    modalProcesando(false);
+                    console.error(xhr, textStatus, errorThrown);
+                }
+         });
+    }
+    function cargarTypeState(data, selected) {
+         $("#cmbTypeState").empty();
+         $("#cmbTypeState").append('<option value="" disabled selected>Seleccione un Estado</option>');
+         $.each(data, function (i, lista) {
+             if (data[i].idTypeState == selected) {
+                 $("#cmbTypeState").append('<option value="' + data[i].idTypeState + '"selected>' + data[i].typeState + '</option>');
+             }
+             else {
+                 $("#cmbTypeState").append('<option value="' + data[i].idTypeState + '">' + data[i].typeState + '</option>');
+             }
+         });
+     }
+
+      function seleccionarEstado()
+     {
+         var combo=document.getElementById("cmbTypeState");
+         idTypeState = combo.options[combo.selectedIndex].value;
+     }
+</script>
+    }
