@@ -3,6 +3,7 @@
 @using static Common.Utils.Constant.Const
 @{
     var idRols = User.Claims.FirstOrDefault(x => x.Type == TypeClaims.IdRol).Value;
+    var userName = User.Claims.FirstOrDefault(x => x.Type == TypeClaims.UserName).Value;
 
     bool isAdmin = idRols.Any(x => x.ToString() ==Convert.ToInt32(Enums.RolUser.Administrador).ToString());
     bool isStandar = idRols.Any(x => x.ToString() == Convert.ToInt32(Enums.RolUser.Estandar).ToString());
@@ -38,7 +39,7 @@
                         @if (User != null)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index" title="Manage">Hola @User.Identity.Name</a>
+                                <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index" title="Manage">¡Hola @userName!</a>
                             </li>
                             <li class="nav-item">
                                 <form class="form-inline" asp-area="" asp-controller="Auth" asp-action="Logout" method="get">

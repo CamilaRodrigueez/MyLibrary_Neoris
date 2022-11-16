@@ -53,12 +53,14 @@ namespace MyLibrary_Neoris.Controllers
                 TokenDto token = JsonConvert.DeserializeObject<TokenDto>(response.Result.ToString());
                 string idRoles = Utils.GetClaimValue(token.Token, TypeClaims.IdRol);
                 string idUser = Utils.GetClaimValue(token.Token, TypeClaims.IdUser);
+                string userName = Utils.GetClaimValue(token.Token, TypeClaims.UserName);
                 var claims = new List<Claim>
                 {
                     new Claim("Token", token.Token),
                     new Claim("Expiration", token.Expiration.ToString()),
                     new Claim(TypeClaims.IdRol,idRoles),
                     new Claim(TypeClaims.IdUser,idUser),
+                    new Claim(TypeClaims.UserName,userName),
                 };
                 var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
